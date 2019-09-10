@@ -1,0 +1,16 @@
+layout(matrix(c(1,2,3,3),nrow=2,ncol=2),widths = c(2,1))
+par(mai=c(0.6,0.6,0.1,0.1),cex=0.7)
+x<-rnorm(5000)
+y<-rchisq(5000,10)
+hist(x,prob=TRUE,col="lightblue",xlab = "x",ylab = "Desity",ylim=c(0,0.4))
+hist(y,freq=FALSE,col="pink",xlab ="y",ylab = "Density",main="")
+boxplot(x,col="red",lwd=1)
+
+
+layout(matrix(c(1,2,3,3),nrow=2,ncol=2,byrow = TRUE),heights = c(2,1))
+par(mai=c(0.6,0.6,0.1,0.1),cex=0.7)
+x<-rnorm(1000)
+y<-rchisq(1000,10)
+hist(x,prob=TRUE,col="lightblue",xlab = "x",ylab = "Desity",ylim=c(0,0.4),main="")
+plot(x,y,xlab = "x",ylab = "y")
+boxplot(y,col="red",lwd=1,horizontal = TRUE,varwidth = TRUE)
