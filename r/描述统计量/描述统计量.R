@@ -8,13 +8,13 @@ mean(table1_1$分数)
 table1_2<-read.xlsx("D:\\书籍资料整理\\统计R-贾俊平\\3-230名学生分组数据.xlsx",sheetName = "Sheet1",encoding="UTF-8")
 
 #加权平均数
-weighted.mean(table1_2$组中值,table1_1$人数)
+weighted.mean(table1_2$组中值,table1_2$人数)
 
 #中位数
 median(table1_1$分数)
 
 #分位数
-quantile(table1_1$分数,probs = c(0.25,0.75),type=6)
+quantile(table1_1$分数,probs = c(0.25,0.75),type=7)
 
 #百分位数
 quantile(table1_1$分数,probs = c(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9),type=6)
@@ -35,7 +35,8 @@ sd(table1_1$分数)
 
 #变异系数 sd/mean
 
-#标准分数数组 
+
+#标准分数数组 ？
 as.vector(round(scale(table1_1$分数),4))
 
 #偏度系数

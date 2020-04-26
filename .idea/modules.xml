@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://D:/my_program/python_study/.idea/python_study.iml" filepath="D:/my_program/python_study/.idea/python_study.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/statics_use.iml" filepath="$PROJECT_DIR$/.idea/statics_use.iml" />
+    </modules>
+  </component>
+</project>

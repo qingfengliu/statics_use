@@ -86,9 +86,9 @@ x.fore<-forecast(x.fit,h=5)
 x.fore
 plot(x.fore)
 
-#例5-9
+#德国工人季节失业率(简单季节模型)
 #读入数据，并绘制时序图
-f<-read.table("E:/R/data/file19.csv",sep=",",header = T)
+f<-read.table("D:\\书籍资料整理\\时间序列分析_王燕\\file19.csv",sep=",",header = T)
 x<-ts(f$unemployment_rate,start = c(1962,1),frequency = 4)
 plot(x)
 #1阶4步差分，并绘制出差分后序列的时序图
@@ -107,9 +107,9 @@ x.fore<-forecast(x.fit,h=12)
 x.fore
 plot(x.fore)
 
-#例5-10
+#美国女性月度失业率
 #读入数据，并绘制时序图
-g<-read.table("E:/R/data/file20.csv",sep=",",header = T)
+g<-read.table("D:\\书籍资料整理\\时间序列分析_王燕\\file20.csv",sep=",",header = T)
 x<-ts(g$unemployment_rate,start = c(1948,1),frequency = 12)
 plot(x)
 #作1阶12步差分，并绘制出差分后序列的时序图
@@ -127,14 +127,23 @@ x.fit
 #残差序列白噪声检验
 for(i in 1:2) print(Box.test(x.fit$residual,lag=6*i))
 
-#例5-6 续(2)
+x.fit<-arima(x,order = c(1,1,1),seasonal = list(order=c(0,1,1),period=12))
+x.fit
+#残差序列白噪声检验
+for(i in 1:2) print(Box.test(x.fit$residual,lag=6*i))
+
+#残差自回归估计中国农业实际国民收入指数序列
 #拟合关于时间t的线性回归模型
-d<-read.table("E:/R/data/file17.csv",sep=",",header = T)
+d<-read.table("D:\\书籍资料整理\\时间序列分析_王燕\\file17.csv",sep=",",header = T)
 x<-ts(d$index,start = 1952)
 t<-c(1:37)
+
+#求线性回归 x=at+b  
 x.fit1<-lm(x~t)
 summary(x.fit1)
-#拟合关于延迟变量的自回归模型
+#拟合关于延迟变量的自回归模型：书中
+#尝试构造了两种模型,一种是变量为时间t的幂函数
+#另一种是变量为延迟序列值xt-1
 xlag<-x[2:37]
 x2<-x[1:36]
 x.fit2<-lm(x2~xlag)
@@ -146,9 +155,11 @@ plot(x,type = "p",pch=8)
 lines(fit1,col=2)
 lines(fit2,col=4)
 
-#例5-6 续(3)
+#残差自相关检验
 library(lmtest)
+#DW检验
 dwtest(x.fit1)
+#DWh检验
 dwtest(x.fit2,order.by=xlag)
 
 #例5-6 续(5)
