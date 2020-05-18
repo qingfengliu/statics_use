@@ -1,0 +1,11 @@
+###################利用adabag包中的boosting建立组合模型
+##与书中给出的结果不太一样
+library("adabag")
+MailShot<-read.table(file="D:\\书籍资料整理\\《R语言数据挖掘(第2版)》R代码和案例数据\\邮件营销数据.txt",header=TRUE)
+MailShot<-MailShot[,-1]
+Ctl<-rpart.control(minsplit=20,maxcompete=4,maxdepth=30,cp=0.01,xval=10)
+set.seed(12345)
+BoostM<-boosting(MAILSHOT~.,data=MailShot,boos=TRUE,mfinal=25,coeflearn="Breiman",control=Ctl)
+BoostM$importance
+ConfM4<-table(MailShot$MAILSHOT,BoostM$class)
+(E4<-(sum(ConfM4)-sum(diag(ConfM4)))/sum(ConfM4))
