@@ -5,6 +5,10 @@ MailShot<-read.table(file="D:\\书籍资料整理\\《R语言数据挖掘(第2�
 MailShot<-MailShot[,-1]
 Ctl<-rpart.control(minsplit=20,maxcompete=4,maxdepth=30,cp=0.01,xval=10)
 set.seed(12345)
+#boosting(输入变量名~输出变量名,data=数据框名,mfinal=重复次数,boos=TRUE,coeflearn=模型权重调整方法,control=参数对象名)
+#mfinal用于指定重复几次自举过程,默认值为100
+#boos=TRUE表示每次自举过程均调整各观测进入自举样本的权重
+#参数coeflearn用于指定预测时个模型的权重设置方法。可取"Breiman"或"Freund".
 BoostM<-boosting(MAILSHOT~.,data=MailShot,boos=TRUE,mfinal=25,coeflearn="Breiman",control=Ctl)
 BoostM$importance
 ConfM4<-table(MailShot$MAILSHOT,BoostM$class)
