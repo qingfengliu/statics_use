@@ -1,0 +1,32 @@
+##############模拟线性不可分下的SVM
+#本例制造出了一个线性不可分的例子(残忍的将一类将另一类分割了)
+#制造训练集和预测集
+set.seed(12345)
+x<-matrix(rnorm(n=400,mean=0,sd=1),ncol=2,byrow=TRUE)
+x[1:100,]<-x[1:100,]+2
+x[101:150,]<-x[101:150,]-2
+y<-c(rep(1,150),rep(2,50))
+data<-data.frame(Fx1=x[,1],Fx2=x[,2],Fy=as.factor(y))
+flag<-sample(1:200,size=100)
+data_train<-data[flag,]
+data_test<-data[-flag,]
+plot(data_train[,2:1],col=as.integer(as.vector(data_train[,3])),pch=8,cex=0.7,main="训练样本集散点图")
+
+#采用径向核还有10折交叉验证方法,挑选最适合参数。
+#利用等高线绘制不同组着下的预测误差。最优预测为C=0.1(书中的例子为C=1000所以用等高线能看出来),gamma=0.5
+#
+library("e1071")
+set.seed(12345)
+tObj<-tune.svm(Fy~.,data=data_train,type="C-classification",kernel="radial",
+               cost=c(0.001,0.01,0.1,1,5,10,100,1000),gamma=c(0.5,1,2,3,4),scale=FALSE)
+plot(tObj,xlab=expression(gamma),ylab="损失惩罚参数C",
+     main="不同参数组合下的预测错误率",nlevels=10,color.palette=terrain.colors)
+#
+BestSvm<-tObj$best.model
+summary(BestSvm)
+
+plot(x=BestSvm,data=data_train,formula=Fx1~Fx2,svSymbol="#",dataSymbol="*",grid=100)
+#对测试集data_test进行预测。得到错误率为0.1
+yPred<-predict(BestSvm,data_test)
+(ConfM<-table(yPred,data_test$Fy))
+(Err<-(sum(ConfM)-sum(diag(ConfM)))/sum(ConfM))
