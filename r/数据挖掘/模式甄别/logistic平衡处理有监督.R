@@ -1,0 +1,34 @@
+#################模拟数据异常点甄别：非平衡样本的平衡化处理
+Data<-read.table(file="D:\\书籍资料整理\\《R语言数据挖掘(第2版)》R代码和案例数据\\模式甄别模拟数据2.txt",header=TRUE,sep=",")
+library("DMwR")
+Data$y<-factor(Data$y)
+set.seed(12345)
+#perc.over合成率中的M
+#perc.under欠抽样比例
+newData<-SMOTE(y~.,data=Data,k=5,perc.over=1000,perc.under=200)  
+plot(newData[,1:2],main="SMOTE处理后的观测点分布",xlab="x1",ylab="x2",pch=as.integer(as.vector(Data[,3]))+1,cex=0.8)
+#############SMOTE处理前后的甄别效果对比
+LogModel<-glm(y~.,data=newData,family=binomial(link="logit"))  
+LogFit<-predict(object=LogModel,newdata=Data,type="response")  
+Data$Log.scores<-LogFit
+library("ROCR")
+par(mfrow=c(2,2))
+pd<-prediction(Data$Log.scores,Data$y)
+pf1<-performance(pd,measure="rec",x.measure="rpp") 
+pf2<-performance(pd,measure="prec",x.measure="rec")   
+plot(pf1,main="模式甄别的累计回溯精度曲线")
+plot(pf2,main="模式甄别的决策精度和回溯精度曲线")
+Data.Sort<-Data[order(x=Data$Log.scores,decreasing=TRUE),]
+P<-0.30
+N<-length(Data[,1])
+NoiseP<-head(Data.Sort,trunc(N*P))
+colP<-ifelse(1:N %in% rownames(NoiseP),2,1)
+plot(Data[,1:2],main="SMOTE处理后的模式甄别结果(30%)",xlab="x1",ylab="x2",pch=as.integer(as.vector(Data[,3]))+1,cex=0.8,col=colP)
+LogModel<-glm(y~.,data=Data,family=binomial(link="logit"))   
+LogFit<-predict(object=LogModel,newdata=Data,type="response")
+Data$Log.scores<-LogFit
+Data.Sort<-Data[order(x=Data$Log.scores,decreasing=TRUE),]
+NoiseP<-head(Data.Sort,trunc(N*P))
+colP<-ifelse(1:N %in% rownames(NoiseP),2,1)
+plot(Data[,1:2],main="平衡化处理前的模式甄别结果(30%)",xlab="x1",ylab="x2",pch=as.integer(as.vector(Data[,3]))+1,cex=0.8,col=colP)
+#改良效果不明显。
