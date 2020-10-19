@@ -21,6 +21,7 @@ x.fit2
 for(i in 1:2) print(Box.test(x.fit2$residual,lag=6*i))
 
 #这里MA(2) 和AR(1)在检验上都不会有什么错误。
-#若要找出最适合的模型需要使用AIC和SBC准则判断。这里拟合函数arima仅给出.AIC,sigma^2方差。
+#若要找出最适合的模型需要使用AIC和SBC准则判断。这里拟合函数arima仅给出.AIC,
+#sigma^2方差。
 #log likelihood。极大似然值。
-#AIC=-2(极大似然函数值)+2(模型中未知参数个数)。这里计算出的值貌似和书中公式不太一样。
+#AIC=-2(极大似然函数值)+2(模型中未知参数个数)。
