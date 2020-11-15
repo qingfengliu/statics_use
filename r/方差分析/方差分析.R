@@ -7,7 +7,7 @@ example8_2<-rename(example8_2,c(id="地块",value="产量"))
 save(example8_2,file="D:\\书籍资料整理\\统计R-贾俊平\\example8_2.RData")
 head(example8_2)
 
-load("D:\\书籍资料整理\\统计R-贾俊平\\example8_2.RData")
+load("D:\\书籍资料整理\\统计学\\example8_2.RData")
 attach(example8_2)
 boxplot(产量~品种,col="gold",main="",ylab="产量",xlab="品种")
 

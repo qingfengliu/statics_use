@@ -1,0 +1,60 @@
+import pandas as pd
+import statsmodels.stats.weightstats as sw
+from scipy.stats import norm
+from scipy.stats import shapiro
+from scipy import stats
+import numpy as np
+import math
+import scipy.stats as st
+#1.总体均值检验
+#(1)大样本
+#无法指定方差
+data=pd.read_csv(r'D:\书籍资料整理\统计学\example6_3.csv',encoding='gbk')
+sw.ztest(data['PM2.5值'], value=81,alternative="smaller")
+data['PM2.5值'].count()
+#注意这里区间估计时,均值取样本均值,
+norm.ppf(0.95,loc=data['PM2.5值'].mean(),scale=data['PM2.5值'].std()/math.sqrt(data['PM2.5值'].count()))
+
+#(1)t检验
+
+data=pd.read_csv(r'D:\书籍资料整理\统计学\example6_4.csv',encoding='gbk')
+# print(data)
+#依然没有给出置信区间，这里就暂时不计算置信区间了
+#注:两样本均值的小样本检验用ttest_ind
+#配对样本为ttest_rel
+st.ttest_1samp(data['厚度'], 5)
+
+#2.总体方差检验。并没有找到直接的调用函数实现的网上找到了一个函数
+def chi2test(sample_var, sample_num,sigma_square,side='both'):
+    '''
+    参数：
+    sample_var--样本方差
+    sample_num--样本容量
+    sigma_square--H0方差
+    返回值：
+    pval
+    '''
+    x0=((sample_num-1)*sample_var)/(sigma_square)
+    chi2 = stats.chi2(df=sample_num-1)
+    pval = None
+    if side == 'both':
+        p = chi2.cdf(x0)
+        pval = min(p, 1-p)
+    elif side == 'left':
+        pval = chi2.cdf(x0)
+    else:
+        pval = chi2.sf(x0)
+    return {"pval": pval}
+
+data=pd.read_csv(r'D:\书籍资料整理\统计学\example6_11.csv',encoding='gbk')
+chi2test(data['填装量'].var(),data['填装量'].count(),16,side='right')
+
+#3.正态性检验
+#(1)shapiro-Wilk检验
+data=pd.read_csv(r'D:\书籍资料整理\统计学\example6_4.csv',encoding='gbk')
+
+shapiro(data['厚度'])
+#(2)K-S检验.
+stats.kstest(data['厚度'], 'norm',args=(data['厚度'].mean(),data['厚度'].std()),N=data['厚度'].count(),mode='asymp')
+#这里最后一个参数不知道是啥用,但是这样设置
+#(3)Cramér-von Mises  也是一种拟合检验
