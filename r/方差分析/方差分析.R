@@ -71,7 +71,8 @@ dfm<-melt(example8_5,measure.vars = "产量",id.vars = c("品种","施肥方式"
 cast(dfm,品种+施肥方式+variable~.,mystats)
 
 #主效应方差分析表
-model_2wm<-aov(产量~品种+施肥方式)
+example8_5<-read.csv("D:/书籍资料整理/统计学/example8_5.csv")
+model_2wm<-aov(产量~品种+施肥方式,data=example8_5)
 summary(model_2wm)
 model_2wm$coefficients
 #主效应和交互效应图

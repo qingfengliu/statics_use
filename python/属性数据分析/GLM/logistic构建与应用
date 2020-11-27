@@ -1,0 +1,47 @@
+#本章主要内容为变量选择与模型检验
+#1.模型选择
+#书中没有提到实际Python也没有自动选择变量的方法
+#选择的依据就是书中的向后剔除的表格就是依据这里
+#记录一下表格各列的意义或数据来着哪里方便制表
+#模型:模型的序号
+#预测量:模型引入的预测量
+#偏差:来自summary2()中的Deviance
+#df:来自summary2()中的Df Residuals
+#AIC:
+#模型比较:
+#偏差的差和df:服从的是卡方分布.
+
+#2.模型检验
+#(1)似然比检验,这个在summary函数中会给出模型的似然值.
+#一般用于检测,对于能够对数据建立的所有logistic模型中是否最好
+#(2)残差:
+#①皮尔逊残差模型成立时残差在0附近
+#results.resid_pearson
+# fig, ax = plt.subplots()
+# ax.scatter(yhat, res.resid_pearson)
+# ax.hlines(0, 0, 1)
+# ax.set_xlim(0, 1)
+# ax.set_title('Residual Dependence Plot')
+# ax.set_ylabel('Pearson Residuals')
+# ax.set_xlabel('Fitted values')
+
+#②标准化残差,拟合好近似服从正态分布,并且很少有绝对值大于2的
+# from scipy import stats
+# fig, ax = plt.subplots()
+# resid = res.resid_deviance.copy()
+# resid_std = stats.zscore(resid)
+# ax.hist(resid_std, bins=25)
+# ax.set_title('Histogram of standardized deviance residuals');
+#另外还可以绘制PP图QQ图来观察标准化残差
+# from statsmodels import graphics
+# graphics.gofplots.qqplot(resid, line='r')
+#(3)异常点可以通过下边公式来检测异常点,并且通过dfbeta值来确定异常点
+# infl = res.get_influence(observed=False)
+# summ_df = infl.summary_frame()
+# summ_df.sort_values('cooks_d', ascending=False)[:10]
+# fig = infl.plot_index(y_var='dfbeta', idx=0, threshold=0.5)
+# fig.tight_layout(pad=1.0)
+#(4)拟合优度,指的是logistic整体的拟合优度,
+#尽管summary结果给出了Pearson chi2皮尔逊统计量但是书中说,皮尔逊统计量是无效的但是这里为什么会给出?
+#这里讲过G统计量和X统计量是需要将数据分组得出的,python没有直接查到
+#另外有一种Hosmer-Lemeshow检验有兴趣可以查下.
