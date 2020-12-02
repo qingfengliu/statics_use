@@ -53,7 +53,7 @@ chi2test(data['填装量'].var(),data['填装量'].count(),16,side='right')
 #(1)shapiro-Wilk检验
 data=pd.read_csv(r'D:\书籍资料整理\统计学\example6_4.csv',encoding='gbk')
 
-shapiro(data['厚度'])
+
 #(2)K-S检验.
 stats.kstest(data['厚度'], 'norm',args=(data['厚度'].mean(),data['厚度'].std()),N=data['厚度'].count(),mode='asymp')
 #这里最后一个参数不知道是啥用,但是这样设置

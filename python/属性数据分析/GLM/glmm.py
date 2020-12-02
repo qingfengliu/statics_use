@@ -42,7 +42,7 @@ result = model.fit_vb()
 #而statsmodels使用的是贝叶斯方法.
 #结果给出的是方差可能要开根号才能求标准差
 #另外
-result.summary()
+print(result.summary())
 
 data=pd.read_csv(r"D:/书籍资料整理/属性数据分析/老鼠.csv")
 random = {"a": '0 + C(簇)'}
