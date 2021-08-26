@@ -59,3 +59,4 @@ history = model.fit(X_train, y_train, epochs=100,
                     validation_data=(X_valid, y_valid),
                     callbacks=[checkpoint_cb, early_stopping_cb])
 mse_test = model.evaluate(X_test, y_test)
+
