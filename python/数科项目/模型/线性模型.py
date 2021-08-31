@@ -75,6 +75,8 @@ polynomial_regression = Pipeline([
     ])
 
 plot_learning_curves(polynomial_regression, X, y)
+#pipeline打印模型参数的方法
+# polynomial_regression.named_steps['lin_reg']
 plt.axis([0, 80, 0, 3])           # not shown
 
 plt.show()                        # not shown

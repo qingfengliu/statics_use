@@ -59,8 +59,11 @@ y_test_5 = (y_test == 5)
 rnd_clf = RandomForestClassifier(n_estimators=500, max_leaf_nodes=16, random_state=42)
 rnd_clf.fit(X_train, y_train_5)  #这里暂时使用随机森林来拟合,
 #交叉验证主要是验证训练集参数的很有效指标, 对于测试集这样的处理是否有用呢？
+print('正在跑 测试交叉验证 2')
 y_train_pred = cross_val_predict(rnd_clf, X_train, y_train_5, cv=10)   #每个数据预测值
-y_score_test = cross_val_predict(rnd_clf, X_train, y_train_5, cv=10,method='decision_function')   #每个数据预测得分
+y_score_train = cross_val_predict(rnd_clf, X_train, y_train_5, cv=10,method='predict_proba')   #每个数据预测得分
+y_score_test = cross_val_predict(rnd_clf, X_test, y_test_5, cv=10,method='predict_proba')   #每个数据预测得分
+
 
 print('预测类别:',y_train_pred)
 print('预测得分:',y_train_pred)
