@@ -52,4 +52,22 @@ x = np.array([[[5, 78, 2, 34, 0],
                [6, 79, 3, 35, 1],
                [7, 80, 4, 36, 2]]])
 
-#
+#x.ndim  #轴数
+#train_images.shape  #形状
+#train_images.dtype  #数据类型
+
+# 切片操作
+my_slice = train_images[10:100, :, :]  # 比较推荐这种切片方式,更直观
+my_slice.shape
+
+my_slice = train_images[:, 14:, 14:]  # 每个图片右下角截取14*14个像素
+
+my_slice = train_images[:, 7:-7, 7:-7] # 图像中心截取14*14个像素
+
+# 批量操作,通常来说所有数据张量的第一个轴,都是样本轴.在MNIST的例子中,样本就是数字图像
+# 深度学习模型不会同时处理整个数据集,而是将数据拆解成小批量.
+
+batch=train_images[:128]
+batch=train_images[128:256]
+
+
