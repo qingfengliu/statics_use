@@ -57,6 +57,7 @@ x = np.array([[[5, 78, 2, 34, 0],
 #train_images.dtype  #数据类型
 
 # 切片操作
+(train_images, train_labels), (test_images, test_labels) = mnist.load_data()
 my_slice = train_images[10:100, :, :]  # 比较推荐这种切片方式,更直观
 my_slice.shape
 
@@ -70,4 +71,16 @@ my_slice = train_images[:, 7:-7, 7:-7] # 图像中心截取14*14个像素
 batch=train_images[:128]
 batch=train_images[128:256]
 
+n = 3
+batch = train_images[128 * n:128 * (n + 1)]
+x = np.array([[0., 1.],
+             [2., 3.],
+             [4., 5.]])
+print(x.shape)
+x = x.reshape((6, 1))
+print(x)
+x = np.zeros((300, 20))
+#转置
+x = np.transpose(x)
+print(x.shape)
 
