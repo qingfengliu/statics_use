@@ -5,7 +5,7 @@ import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-#读取输入数据
+#读取输入数据.属于char-rnn模型
 
 filepath = r'D:\书籍资料整理\文本处理\莎士比亚文本.txt'
 with open(filepath) as f:

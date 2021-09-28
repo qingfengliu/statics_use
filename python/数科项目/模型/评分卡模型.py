@@ -73,21 +73,21 @@ train_data = train_data.loc[train_data['年龄'] > 0]
 columns = ['35-69天逾期次数','60-89天逾期次数','高于90天逾期次数']
 train_data.loc[:, columns].plot.box(vert=False)
 train_data = train_data[(train_data['35-69天逾期次数'] < 90) & (train_data['60-89天逾期次数'] < 90)  & (train_data['高于90天逾期次数'] < 90)]
-
+print('-------------------------数据探索完------------------------')
 
 X = train_data.iloc[:, :-1]
 y = train_data.iloc[:, -1]
 
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, test_size=0.25)
-trans_cm = cm.ChiMerge(max_intervals=10, min_intervals=5, output_dataframe=True)
+trans_cm = cm.ChiMerge(max_intervals=10, min_intervals=5, output_dataframe=True)  #卡分分箱
 result_cm = trans_cm.fit_transform(X_train, y_train)
-print(trans_cm.boundaries_) # 每个特征的区间切分
+print('特征切分',trans_cm.boundaries_) # 每个特征的区间切分
 
 trans_woe = woe.WOE_Encoder(output_dataframe=True)
 result_woe = trans_woe.fit_transform(result_cm, y_train)
-print(trans_woe.iv_) # 每个特征的信息值 (iv)
-print(trans_woe.result_dict_) # 每个特征的WOE字典和信息值 (iv)
+print('每个特征的信息值',trans_woe.iv_) # 每个特征的信息值 (iv)
+print('每个特征的WOE字典和信息值',trans_woe.result_dict_) # 每个特征的WOE字典和信息值 (iv)
 
 #手动调整分箱:观察每一个特征的分布和响应率
 col = '年龄'
