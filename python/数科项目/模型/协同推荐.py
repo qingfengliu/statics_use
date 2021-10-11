@@ -5,7 +5,9 @@ import random
 import implicit
 from sklearn.preprocessing import MinMaxScaler
 from sklearn import metrics
+import random
 
+random.seed(42)
 # https://blog.csdn.net/weixin_42608414/article/details/90319447
 # 使用派神的文章
 # 版权声明：本文为CSDN博主「-派神 -」的原创文章，遵循CC
@@ -117,9 +119,9 @@ print(content_vecs.shape)
 
 #下面我们展示这10篇最相似的文章title:
 
-for content in similar:
-    idx, score = content
-    print(grouped_df.title.loc[grouped_df.content_id == idx].iloc[0],"|",score)
+# for content in similar:
+#     idx, score = content
+#     print(grouped_df.title.loc[grouped_df.content_id == idx].iloc[0],"|",score)
 
 #这些文章似乎都和人工智能有关。其中第一篇文章就是content_id = 235的文章本身，
 # 正如我们前面说content_id = 235要和所有文章计算相似度，这当然也包含它自己本身，
