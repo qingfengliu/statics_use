@@ -115,7 +115,7 @@ model = lrsc.LogisticRegressionScoreCard(trans_woe, PDO=-20, basePoints=100, ver
 model.fit(result_woe, y_train)
 print(model.woe_df_) # 从woe_df_属性中可得评分卡规则
 
-exit()
+
 sc_table = model.woe_df_.copy()
 result = model.predict(X_train[feature_list],
                        load_scorecard=sc_table)  # Scorecard should be applied on the original feature values
