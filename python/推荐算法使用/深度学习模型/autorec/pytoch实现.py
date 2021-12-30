@@ -95,6 +95,8 @@ class AutoRec(nn.Module):
         # 定义解码器结构
         self._decoder = nn.Sequential(
             nn.Linear(self._hidden_units, self._num_items)
+
+            
         )
 
     def forward(self, input):
