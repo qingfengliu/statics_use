@@ -7,7 +7,8 @@ import numpy as np
 from random import shuffle
 from nltk.tokenize import TreebankWordTokenizer
 from gensim.models import KeyedVectors
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+#这里是GPU使用错误,导致前边的程序都不能使用GPU是我的问题
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 def pre_process_data(filepath):
     """
@@ -108,7 +109,7 @@ y_test = expected[split_point:]
 
 # 神经网络参数
 maxlen = 400
-batch_size = 4  #只能减小批量换得内存的节约
+batch_size = 32  #只能减小批量换得内存的节约
 embedding_dims = 300  # Length of the token vectors we will create for passing into the Convnet
 # filters = 250           # Number of filters we will train
 # kernel_size = 3         # The width of the filters, actual filters will each be a matrix of weights of size: embedding_dims x kernel_size or 50 x 3 in our case

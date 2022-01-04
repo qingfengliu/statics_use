@@ -20,7 +20,7 @@ import os
 from random import shuffle
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 #IMDB电影评论情感问题,是个二分类问题,0,1分布代表积极和消极
 #文件组成,两个文件夹分别代表0和1
@@ -116,7 +116,7 @@ y_test = expected[split_point:]
 #神经网络参数,可以看到最大长度为400，那么需要超过400的阶段,低于400的填充.
 
 maxlen = 400        #
-batch_size = 4         # 小批量,批量数
+batch_size = 32         # 小批量,批量数
 embedding_dims = 300    # 词向量的长度,影响神经网络结构形状
 filters = 250           # 卷积核数量
 kernel_size = 3         # 卷积核大小
