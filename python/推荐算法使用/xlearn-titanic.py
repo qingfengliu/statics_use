@@ -66,7 +66,7 @@ fm_model.setTest(xdm_test)  # Test data
 fm_model.setSigmoid()  # Convert output to 0-1
 
 # Start to predict
-# The output result will be stored in output.txt
+# The output res will be stored in output.txt
 # if no result out path setted, we return res as numpy.ndarray
 res = fm_model.predict("D:/model/demo_titanic/model_dm.out")
 

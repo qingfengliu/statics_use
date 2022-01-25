@@ -5,15 +5,18 @@ import time
 import configparser
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import LabelEncoder,MinMaxScaler,OneHotEncoder
+pd.set_option('max_row',200)
+pd.set_option('max_columns',100)
 
 cf=configparser.ConfigParser()
 filename=cf.read('model.ini')
 base_dir=cf.get("path","data_path")
 print(base_dir)
 
-data_all=pd.read_csv("")
+data_all=pd.read_csv(base_dir+'/数据/train.csv')
 print(data_all.shape)
-
+print(data_all.head())
+exit()
 data_all['sex'].fillna('未知',inplace=True)
 data_all['position'].fillna('未知',inplace=True)
 

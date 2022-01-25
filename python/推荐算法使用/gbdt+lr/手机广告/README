@@ -1,0 +1,22 @@
+数据来源于比赛:
+https://www.kaggle.com/c/avazu-ctr-prediction
+
+字段
+id: 唯一识别码
+click: 是否点击
+hour: format is YYMMDDHH, so 14091123 means 23:00 on Sept. 11, 2014 UTC.   时间 可以提取小时信息
+C1 -- anonymized categorical variable	匿名类型变量
+banner_pos	
+site_id
+site_domain
+site_category
+app_id
+app_domain
+app_category
+device_id
+device_ip
+device_model
+device_type
+device_conn_type
+C14-C21 -- anonymized categorical variables
+
