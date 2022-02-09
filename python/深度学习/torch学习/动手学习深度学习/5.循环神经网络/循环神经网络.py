@@ -339,6 +339,7 @@ Y, state_new = rnn_layer(X, state)
 device = try_gpu()
 net = RNNModel(rnn_layer, vocab_size=len(vocab))
 net = net.to(device)
+#具有随机权重进行预测
 predict_ch8('time traveller', 10, net, vocab, device)
 
 
