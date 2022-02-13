@@ -104,5 +104,6 @@ print("Validation MSE:", val_error)  # Not shown
 xgb_reg.fit(X_train, y_train,
             eval_set=[(X_val, y_val)], early_stopping_rounds=2)
 y_pred = xgb_reg.predict(X_val)
+
 val_error = mean_squared_error(y_val, y_pred)  # Not shown
 print("Validation MSE:", val_error)  # Not shown
