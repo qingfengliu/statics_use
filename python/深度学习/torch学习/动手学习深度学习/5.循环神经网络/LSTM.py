@@ -8,13 +8,6 @@ import time
 import numpy as np
 import math
 
-def sgd(params, lr, batch_size):  #@save
-    """小批量随机梯度下降"""
-    with torch.no_grad():
-        for param in params:
-            param -= lr * param.grad / batch_size
-            param.grad.zero_()
-
 def grad_clipping(net, theta):  #@save
     """裁剪梯度"""
     if isinstance(net, nn.Module):
@@ -172,45 +165,6 @@ def try_gpu(i=0):  #@save
         return torch.device(f'cuda:{i}')
     return torch.device('cpu')
 
-class RNNModel(nn.Module):
-    """循环神经网络模型"""
-    def __init__(self, rnn_layer, vocab_size, **kwargs):
-        super(RNNModel, self).__init__(**kwargs)
-        self.rnn = rnn_layer
-        self.vocab_size = vocab_size
-        self.num_hiddens = self.rnn.hidden_size
-        # 如果RNN是双向的（之后将介绍），num_directions应该是2，否则应该是1
-        if not self.rnn.bidirectional:
-            self.num_directions = 1
-            self.linear = nn.Linear(self.num_hiddens, self.vocab_size)
-        else:
-            self.num_directions = 2
-            self.linear = nn.Linear(self.num_hiddens * 2, self.vocab_size)
-
-    def forward(self, inputs, state):
-        X = F.one_hot(inputs.T.long(), self.vocab_size)
-        X = X.to(torch.float32)
-        Y, state = self.rnn(X, state)
-        # 全连接层首先将Y的形状改为(时间步数*批量大小,隐藏单元数)
-        # 它的输出形状是(时间步数*批量大小,词表大小)。
-        output = self.linear(Y.reshape((-1, Y.shape[-1])))
-        return output, state
-
-    def begin_state(self, device, batch_size=1):
-        if not isinstance(self.rnn, nn.LSTM):
-            # nn.GRU以张量作为隐状态
-            return  torch.zeros((self.num_directions * self.rnn.num_layers,
-                                 batch_size, self.num_hiddens),
-                                device=device)
-        else:
-            # nn.LSTM以元组作为隐状态
-            return (torch.zeros((
-                self.num_directions * self.rnn.num_layers,
-                batch_size, self.num_hiddens), device=device),
-                    torch.zeros((
-                        self.num_directions * self.rnn.num_layers,
-                        batch_size, self.num_hiddens), device=device))
-
 class Timer:  #@save
     """记录多次运行时间"""
     def __init__(self):
@@ -253,6 +207,45 @@ class Accumulator:  # @save
     def __getitem__(self, idx):
         return self.data[idx]
 
+class RNNModel(nn.Module):
+    """循环神经网络模型"""
+    def __init__(self, rnn_layer, vocab_size, **kwargs):
+        super(RNNModel, self).__init__(**kwargs)
+        self.rnn = rnn_layer
+        self.vocab_size = vocab_size
+        self.num_hiddens = self.rnn.hidden_size
+        # 如果RNN是双向的（之后将介绍），num_directions应该是2，否则应该是1
+        if not self.rnn.bidirectional:
+            self.num_directions = 1
+            self.linear = nn.Linear(self.num_hiddens, self.vocab_size)
+        else:
+            self.num_directions = 2
+            self.linear = nn.Linear(self.num_hiddens * 2, self.vocab_size)
+
+    def forward(self, inputs, state):
+        X = F.one_hot(inputs.T.long(), self.vocab_size)
+        X = X.to(torch.float32)
+        Y, state = self.rnn(X, state)
+        # 全连接层首先将Y的形状改为(时间步数*批量大小,隐藏单元数)
+        # 它的输出形状是(时间步数*批量大小,词表大小)。
+        output = self.linear(Y.reshape((-1, Y.shape[-1])))
+        return output, state
+
+    def begin_state(self, device, batch_size=1):
+        if not isinstance(self.rnn, nn.LSTM):
+            # nn.GRU以张量作为隐状态
+            return  torch.zeros((self.num_directions * self.rnn.num_layers,
+                                 batch_size, self.num_hiddens),
+                                device=device)
+        else:
+            # nn.LSTM以元组作为隐状态
+            return (torch.zeros((
+                self.num_directions * self.rnn.num_layers,
+                batch_size, self.num_hiddens), device=device),
+                    torch.zeros((
+                        self.num_directions * self.rnn.num_layers,
+                        batch_size, self.num_hiddens), device=device))
+
 def train_epoch_ch8(net, train_iter, loss, updater, device, use_random_iter):
     """训练网络一个迭代周期（定义见第8章）"""
     state, timer = None, Timer()
@@ -273,18 +266,29 @@ def train_epoch_ch8(net, train_iter, loss, updater, device, use_random_iter):
         X, y = X.to(device), y.to(device)
         y_hat, state = net(X, state)
         l = loss(y_hat, y.long()).mean()
-        if isinstance(updater, torch.optim.Optimizer):
-            updater.zero_grad()
-            l.backward()
-            grad_clipping(net, 1)
-            updater.step()
-        else:
-            l.backward()
-            grad_clipping(net, 1)
-            # 因为已经调用了mean函数
-            updater(batch_size=1)
+        updater.zero_grad()
+        l.backward()
+        nn.utils.clip_grad_norm_(net.parameters(),max_norm=0.99, norm_type=2)
+        updater.step()
         metric.add(l * y.numel(), y.numel())
     return math.exp(metric[0] / metric[1]), metric[1] / timer.stop()
+
+def train_ch8(net, train_iter, vocab, lr, num_epochs, device,
+              use_random_iter=False):
+    """训练模型（定义见第8章）"""
+    loss = nn.CrossEntropyLoss()
+
+    # 初始化
+    updater = torch.optim.SGD(net.parameters(), lr)
+    predict = lambda prefix: predict_ch8(prefix, 50, net, vocab, device)
+    # 训练和预测
+    for epoch in range(num_epochs):
+        ppl, speed = train_epoch_ch8(
+            net, train_iter, loss, updater, device, use_random_iter)
+
+    print(f'困惑度 {ppl:.1f}, {speed:.1f} 词元/秒 {str(device)}')
+    print(predict('time traveller'))
+    print(predict('traveller'))
 
 def predict_ch8(prefix, num_preds, net, vocab, device):  #@save
     """在prefix后面生成新字符"""
@@ -298,26 +302,6 @@ def predict_ch8(prefix, num_preds, net, vocab, device):  #@save
         y, state = net(get_input(), state)
         outputs.append(int(y.argmax(dim=1).reshape(1)))
     return ''.join([vocab.idx_to_token[i] for i in outputs])
-
-def train_ch8(net, train_iter, vocab, lr, num_epochs, device,
-              use_random_iter=False):
-    """训练模型（定义见第8章）"""
-    loss = nn.CrossEntropyLoss()
-
-    # 初始化
-    if isinstance(net, nn.Module):
-        updater = torch.optim.SGD(net.parameters(), lr)
-    else:
-        updater = lambda batch_size: sgd(net.params, lr, batch_size)
-    predict = lambda prefix: predict_ch8(prefix, 50, net, vocab, device)
-    # 训练和预测
-    for epoch in range(num_epochs):
-        ppl, speed = train_epoch_ch8(
-            net, train_iter, loss, updater, device, use_random_iter)
-
-    print(f'困惑度 {ppl:.1f}, {speed:.1f} 词元/秒 {str(device)}')
-    print(predict('time traveller'))
-    print(predict('traveller'))
 
 batch_size, num_steps = 32, 35
 train_iter, vocab = load_data_time_machine(batch_size, num_steps)
