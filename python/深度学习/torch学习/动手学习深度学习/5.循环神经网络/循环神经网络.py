@@ -8,6 +8,7 @@ import math
 import time
 import numpy as np
 
+
 def sgd(params, lr, batch_size):  #@save
     """小批量随机梯度下降"""
     with torch.no_grad():
@@ -17,26 +18,20 @@ def sgd(params, lr, batch_size):  #@save
 
 def grad_clipping(net, theta):  #@save
     """裁剪梯度"""
-    if isinstance(net, nn.Module):
-        params = [p for p in net.parameters() if p.requires_grad]
-    else:
-        params = net.params
-    norm = torch.sqrt(sum(torch.sum((p.grad ** 2)) for p in params))
-    if norm > theta:
-        for param in params:
-            param.grad[:] *= theta / norm
-
-def read_time_machine():  #@save
-    """将时间机器数据集加载到文本行的列表中"""
-    with open(r'D:\书籍资料整理\时光机器\timemachine.txt', 'r') as f:
-        lines = f.readlines()
-    return [re.sub('[^A-Za-z]+', ' ', line).strip().lower() for line in lines]
+    nn.utils.clip_grad_norm_([p for p in net.parameters()],theta)
 
 def try_gpu(i=0):  #@save
     """如果存在，则返回gpu(i)，否则返回cpu()"""
     if torch.cuda.device_count() >= i + 1:
         return torch.device(f'cuda:{i}')
     return torch.device('cpu')
+
+#词处理函数,说明一下,循环神经网络中构建了一个
+def read_time_machine():  #@save
+    """将时间机器数据集加载到文本行的列表中"""
+    with open(r'D:\书籍资料整理\时光机器\timemachine.txt', 'r') as f:
+        lines = f.readlines()
+    return [re.sub('[^A-Za-z]+', ' ', line).strip().lower() for line in lines]
 
 def tokenize(lines, token='word'):  #@save
     """将文本行拆分为单词或字符词元"""
@@ -278,27 +273,17 @@ def train_epoch_ch8(net, train_iter, loss, updater, device, use_random_iter):
             # 在第一次迭代或使用随机抽样时初始化state
             state = net.begin_state(batch_size=X.shape[0], device=device)
         else:
-            if isinstance(net, nn.Module) and not isinstance(state, tuple):
-                # state对于nn.GRU是个张量
-                state.detach_()
-            else:
-                # state对于nn.LSTM或对于我们从零开始实现的模型是个张量
-                for s in state:
-                    s.detach_()
+            # state对于nn.GRU是个张量
+            state.detach_()
+
         y = Y.T.reshape(-1)
         X, y = X.to(device), y.to(device)
         y_hat, state = net(X, state)
         l = loss(y_hat, y.long()).mean()
-        if isinstance(updater, torch.optim.Optimizer):
-            updater.zero_grad()
-            l.backward()
-            grad_clipping(net, 1)
-            updater.step()
-        else:
-            l.backward()
-            grad_clipping(net, 1)
-            # 因为已经调用了mean函数
-            updater(batch_size=1)
+        updater.zero_grad()
+        l.backward()
+        grad_clipping(net, 1)
+        updater.step()
         metric.add(l * y.numel(), y.numel())
     return math.exp(metric[0] / metric[1]), metric[1] / timer.stop()
 
@@ -309,10 +294,7 @@ def train_ch8(net, train_iter, vocab, lr, num_epochs, device,
     loss = nn.CrossEntropyLoss()
 
     # 初始化
-    if isinstance(net, nn.Module):
-        updater = torch.optim.SGD(net.parameters(), lr)
-    else:
-        updater = lambda batch_size: sgd(net.params, lr, batch_size)
+    updater = torch.optim.SGD(net.parameters(), lr)
     predict = lambda prefix: predict_ch8(prefix, 50, net, vocab, device)
     # 训练和预测
     for epoch in range(num_epochs):
@@ -340,7 +322,7 @@ device = try_gpu()
 net = RNNModel(rnn_layer, vocab_size=len(vocab))
 net = net.to(device)
 #具有随机权重进行预测
-predict_ch8('time traveller', 10, net, vocab, device)
+print(predict_ch8('time traveller', 10, net, vocab, device))
 
 
 num_epochs, lr = 500, 1
