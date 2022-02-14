@@ -8,6 +8,12 @@ import numpy as np
 
 #卷积网络的应用是比较复杂的网络,并且使用GPU,在学习的时候没有完全吃透代码,这里吃透
 #首先比起,渐层的多层感知机代码,主要的还是增加了将数据传入GPU过程为了保持通用封装了函数
+#卷积神经网络,在图片处理领域是十分成熟的,本章内容书要是实现,较为成熟的多层卷积模型.
+#其实其思路差不多,最主要的是思考,落入各层的数据是什么样的这才是最主要的.
+
+#其实这章的函数比原来的数据更少,因为load_data_fashion_mnist已经处理好比较干净的图片数据
+#仅多了evaluate_accuracy_gpu,计算了对测试集精度
+#
 
 class Timer:  #@save
     """记录多次运行时间"""
@@ -57,6 +63,11 @@ def try_gpu(i=0):  #@save
         return torch.device(f'cuda:{i}')
     return torch.device('cpu')
 
+#Xavier是一种参数初始化方式
+def init_weights(m):
+    if type(m) == nn.Linear or type(m) == nn.Conv2d:
+        nn.init.xavier_uniform_(m.weight)
+
 class Accumulator:  # @save
     """在n个变量上累加"""
 
@@ -98,13 +109,10 @@ def evaluate_accuracy_gpu(net, data_iter, device=None): #@save
             metric.add(accuracy(net(X), y), y.numel())
     return metric[0] / metric[1]
 
+
 #@save
 def train_ch6(net, train_iter, test_iter, num_epochs, lr, device):
     """用GPU训练模型(在第六章定义)"""
-    #Xavier是一种参数初始化方式
-    def init_weights(m):
-        if type(m) == nn.Linear or type(m) == nn.Conv2d:
-            nn.init.xavier_uniform_(m.weight)
     net.apply(init_weights)
     print('training on', device)
     net.to(device)
@@ -141,6 +149,16 @@ def train_ch6(net, train_iter, test_iter, num_epochs, lr, device):
     print(f'{metric[2] * num_epochs / timer.sum():.1f} examples/sec '
           f'on {str(device)}')
 
+#ImageNet使用的模型但是本文中使用在了fashion mnist中,将原有fashion mnist拓展为224*224
+#第一层为11*11步幅为4填充为1的图片,所以输出为54这里我是这样计算的,以一个维度为例,224加上填充为226然后kernel_size=11
+#那么必有(11-1)/2*2也就是10个像素被舍弃,那么变为216,由于步进为4那么216/4=54
+#最大池化层3步进为2,那么输出为26*26,维度为96
+#第二个卷积层将图片通道数变为256,且长宽没变,
+#然后池化层将图片变为12*12
+#接下来的池化层,并不改变图片形状只是改变了通道数
+#那么有个问题,卷积层是如何改变通道数的最后的卷积层形状为256通道12*12的图片
+#然后卷积层图片变为5*5
+#Linear展平为256*5*5
 if __name__ == "__main__":
     net = nn.Sequential(
         # 这里，我们使用一个11*11的更大窗口来捕捉对象。
@@ -169,10 +187,6 @@ if __name__ == "__main__":
         # 最后是输出层。由于这里使用Fashion-MNIST，所以用类别数为10，而非论文中的1000
         nn.Linear(4096, 10))
 
-    # X = torch.randn(1, 1, 224, 224)
-    # for layer in net:
-    #     X=layer(X)
-    #     print(layer.__class__.__name__,'output shape:\t',X.shape)
 
     batch_size = 128
     #AlexNet是在ImageNet上进行训练的

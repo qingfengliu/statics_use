@@ -10,6 +10,10 @@ import numpy as np
 #我们创建的块,只要实现了__init__和forward方法就可以封装到
 #nn.Sequential中去
 
+#这里结构实在是太复杂,主要是层多
+#所以本章的重点实际是Inception模块,是怎样做到并行的.
+#需要创建一个,Inception类,将四个通道分别跑,这个步骤在forward中体现
+#最后再用cat函数拼接起来
 class Timer:  #@save
     """记录多次运行时间"""
     def __init__(self):

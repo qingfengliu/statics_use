@@ -140,6 +140,13 @@ def train_ch6(net, train_iter, test_iter, num_epochs, lr, device):
           f'on {str(device)}')
 
 #在windows上没办法
+#这里输入图片为28*28
+#第一层为5*5的填充2输入通道为1输出通道为6的卷积层,可以想象的到,第一层输出的形状没变
+#池化层 2*2 步幅为2的,所以输出为图片的长宽/2 为14*14
+#下一个为5*5的卷积层通道拓展为16,并且由于步幅为1,所以边缘的像素被截断掉,那么图片为10*10
+#下一个平均池化层,将图片长宽再/2,16通道, 为5*5
+#Flatten向量展平,由于上一次结构那么这一次结构为16*5*5=400
+#下边的3个全连接层,全连接层的形状很好理解,第二个参数就是输出形状
 if __name__ == "__main__":
     net = nn.Sequential(
         nn.Conv2d(1, 6, kernel_size=5, padding=2), nn.Sigmoid(),
@@ -150,7 +157,7 @@ if __name__ == "__main__":
         nn.Linear(16 * 5 * 5, 120), nn.Sigmoid(),
         nn.Linear(120, 84), nn.Sigmoid(),
         nn.Linear(84, 10))
-
+    #使用随机生成
     # X = torch.rand(size=(1, 1, 28, 28), dtype=torch.float32)
     # for layer in net:
     #     X = layer(X)
@@ -158,5 +165,6 @@ if __name__ == "__main__":
 
     batch_size = 256
     train_iter, test_iter = load_data_fashion_mnist(batch_size=batch_size)
+
     lr, num_epochs = 0.9, 10
     train_ch6(net, train_iter, test_iter, num_epochs, lr, try_gpu())

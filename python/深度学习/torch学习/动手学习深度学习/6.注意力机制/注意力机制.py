@@ -119,6 +119,22 @@ class Animator:  # @save
         self.config_axes()
         display.display(self.fig)
         display.clear_output(wait=True)
+
+#Nadaraya-Watson核回归的带参数版本
+class NWKernelRegression(nn.Module):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.w = nn.Parameter(torch.rand((1,), requires_grad=True))
+
+    def forward(self, queries, keys, values):
+        # queries和attention_weights的形状为(查询个数，“键－值”对个数)
+        queries = queries.repeat_interleave(keys.shape[1]).reshape((-1, keys.shape[1]))
+        self.attention_weights = nn.functional.softmax(
+            -((queries - keys) * self.w)**2 / 2, dim=1)
+        # values的形状为(查询个数，“键－值”对个数)
+        return torch.bmm(self.attention_weights.unsqueeze(1),
+                         values.unsqueeze(-1)).reshape(-1)
+
 # attention_weights = torch.eye(10).reshape((1, 1, 10, 10))
 # show_heatmaps(attention_weights, xlabel='Keys', ylabel='Queries')
 #创建手工数据集
@@ -145,20 +161,7 @@ attention_weights = nn.functional.softmax(-(X_repeat - x_train)**2 / 2, dim=1)
 y_hat = torch.matmul(attention_weights, y_train)
 plot_kernel_reg(y_hat)
 
-#Nadaraya-Watson核回归的带参数版本
-class NWKernelRegression(nn.Module):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.w = nn.Parameter(torch.rand((1,), requires_grad=True))
 
-    def forward(self, queries, keys, values):
-        # queries和attention_weights的形状为(查询个数，“键－值”对个数)
-        queries = queries.repeat_interleave(keys.shape[1]).reshape((-1, keys.shape[1]))
-        self.attention_weights = nn.functional.softmax(
-            -((queries - keys) * self.w)**2 / 2, dim=1)
-        # values的形状为(查询个数，“键－值”对个数)
-        return torch.bmm(self.attention_weights.unsqueeze(1),
-                         values.unsqueeze(-1)).reshape(-1)
 
 # X_tile的形状:(n_train，n_train)，每一行都包含着相同的训练输入
 X_tile = x_train.repeat((n_train, 1))

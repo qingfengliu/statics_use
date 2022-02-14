@@ -7,26 +7,42 @@ from torch.nn import functional as F
 import math
 import time
 import numpy as np
+#在循环神经网络部分,整个任务其实是一个,文本生成器.
+#所以这部分函数基本分为两部分.一部分为处理文本,另一部分为神经网络学习部分
+#先说学习部分多了一个步骤梯度裁剪,梯度裁剪并不是pytorch使用的裁剪方式.其实
+#使用书中的方式也并不会得到一个更好的结果,那么采用标准包,以后如果接触到论文再说。
+#其次数据处理部分,最终处理函数为load_corpus_time_machine
+#其中包含步骤tokenize将单词拆分可以按字符串拆分和按词拆分,本文用字符串。
+#然后扔到Vocab类中有词频(字符串频),和索引等
+#然后封装一个迭代器,采用随机有放回采样生成小批量数据
 
+class Timer:  #@save
+    """记录多次运行时间"""
+    def __init__(self):
+        self.times = []
+        self.start()
 
-def sgd(params, lr, batch_size):  #@save
-    """小批量随机梯度下降"""
-    with torch.no_grad():
-        for param in params:
-            param -= lr * param.grad / batch_size
-            param.grad.zero_()
+    def start(self):
+        """启动计时器"""
+        self.tik = time.time()
 
-def grad_clipping(net, theta):  #@save
-    """裁剪梯度"""
-    nn.utils.clip_grad_norm_([p for p in net.parameters()],theta)
+    def stop(self):
+        """停止计时器并将时间记录在列表中"""
+        self.times.append(time.time() - self.tik)
+        return self.times[-1]
 
-def try_gpu(i=0):  #@save
-    """如果存在，则返回gpu(i)，否则返回cpu()"""
-    if torch.cuda.device_count() >= i + 1:
-        return torch.device(f'cuda:{i}')
-    return torch.device('cpu')
+    def avg(self):
+        """返回平均时间"""
+        return sum(self.times) / len(self.times)
 
-#词处理函数,说明一下,循环神经网络中构建了一个
+    def sum(self):
+        """返回时间总和"""
+        return sum(self.times)
+
+    def cumsum(self):
+        """返回累计时间"""
+        return np.array(self.times).cumsum().tolist()
+
 def read_time_machine():  #@save
     """将时间机器数据集加载到文本行的列表中"""
     with open(r'D:\书籍资料整理\时光机器\timemachine.txt', 'r') as f:
@@ -41,6 +57,14 @@ def tokenize(lines, token='word'):  #@save
         return [list(line) for line in lines]
     else:
         print('错误：未知词元类型：' + token)
+
+def count_corpus(tokens):  #@save
+    """统计词元的频率"""
+    # 这里的tokens是1D列表或2D列表
+    if len(tokens) == 0 or isinstance(tokens[0], list):
+        # 将词元列表展平成一个列表
+        tokens = [token for line in tokens for token in line]
+    return collections.Counter(tokens)
 
 class Vocab:  #@save
     """文本词表"""
@@ -85,13 +109,6 @@ class Vocab:  #@save
     def token_freqs(self):
         return self._token_freqs
 
-def count_corpus(tokens):  #@save
-    """统计词元的频率"""
-    # 这里的tokens是1D列表或2D列表
-    if len(tokens) == 0 or isinstance(tokens[0], list):
-        # 将词元列表展平成一个列表
-        tokens = [token for line in tokens for token in line]
-    return collections.Counter(tokens)
 
 def seq_data_iter_random(corpus, batch_size, num_steps):  #@save
     """使用随机抽样生成一个小批量子序列"""
@@ -119,7 +136,7 @@ def seq_data_iter_random(corpus, batch_size, num_steps):  #@save
 
 #在迭代过程中，除了对原始序列可以随机抽样外，
 # 我们还可以保证两个相邻的小批量中的子序列在原始序列上也是相邻的。
-# 这种策略在基于小批量的迭代过程中保留了拆分的子序列的顺序，因此称为顺序分区
+# 这种策略在基于小批量的迭代过程中保留了拆分的子序列的顺序，因此称为顺序分区随机有放回的采样作为训练数据
 def seq_data_iter_sequential(corpus, batch_size, num_steps):  #@save
     """使用顺序分区生成一个小批量子序列"""
     # 从随机偏移量开始划分序列
@@ -142,6 +159,7 @@ def load_corpus_time_machine(max_tokens=-1):  #@save
     # 因为时光机器数据集中的每个文本行不一定是一个句子或一个段落，
     # 所以将所有文本行展平到一个列表中
     corpus = [vocab[token] for line in tokens for token in line]
+
     if max_tokens > 0:
         corpus = corpus[:max_tokens]
     return corpus, vocab
@@ -150,6 +168,7 @@ def load_corpus_time_machine(max_tokens=-1):  #@save
 class SeqDataLoader:  #@save
     """加载序列数据的迭代器"""
     def __init__(self, batch_size, num_steps, use_random_iter, max_tokens):
+        #使用随机迭代还是顺序迭代
         if use_random_iter:
             self.data_iter_fn = seq_data_iter_random
         else:
@@ -159,6 +178,34 @@ class SeqDataLoader:  #@save
 
     def __iter__(self):
         return self.data_iter_fn(self.corpus, self.batch_size, self.num_steps)
+
+def load_data_time_machine(batch_size, num_steps,  #@save
+                           use_random_iter=False, max_tokens=10000):
+    """返回时光机器数据集的迭代器和词表"""
+    data_iter = SeqDataLoader(
+        batch_size, num_steps, use_random_iter, max_tokens)
+    return data_iter, data_iter.vocab
+
+def try_gpu(i=0):  #@save
+    """如果存在，则返回gpu(i)，否则返回cpu()"""
+    if torch.cuda.device_count() >= i + 1:
+        return torch.device(f'cuda:{i}')
+    return torch.device('cpu')
+
+class Accumulator:  # @save
+    """在n个变量上累加"""
+
+    def __init__(self, n):
+        self.data = [0.0] * n
+
+    def add(self, *args):
+        self.data = [a + float(b) for a, b in zip(self.data, args)]
+
+    def reset(self):
+        self.data = [0.0] * len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]
 
 #@save
 class RNNModel(nn.Module):
@@ -200,55 +247,6 @@ class RNNModel(nn.Module):
                         self.num_directions * self.rnn.num_layers,
                         batch_size, self.num_hiddens), device=device))
 
-#@tab all
-def load_data_time_machine(batch_size, num_steps,  #@save
-                           use_random_iter=False, max_tokens=10000):
-    """返回时光机器数据集的迭代器和词表"""
-    data_iter = SeqDataLoader(
-        batch_size, num_steps, use_random_iter, max_tokens)
-    return data_iter, data_iter.vocab
-
-class Timer:  #@save
-    """记录多次运行时间"""
-    def __init__(self):
-        self.times = []
-        self.start()
-
-    def start(self):
-        """启动计时器"""
-        self.tik = time.time()
-
-    def stop(self):
-        """停止计时器并将时间记录在列表中"""
-        self.times.append(time.time() - self.tik)
-        return self.times[-1]
-
-    def avg(self):
-        """返回平均时间"""
-        return sum(self.times) / len(self.times)
-
-    def sum(self):
-        """返回时间总和"""
-        return sum(self.times)
-
-    def cumsum(self):
-        """返回累计时间"""
-        return np.array(self.times).cumsum().tolist()
-
-class Accumulator:  # @save
-    """在n个变量上累加"""
-
-    def __init__(self, n):
-        self.data = [0.0] * n
-
-    def add(self, *args):
-        self.data = [a + float(b) for a, b in zip(self.data, args)]
-
-    def reset(self):
-        self.data = [0.0] * len(self.data)
-
-    def __getitem__(self, idx):
-        return self.data[idx]
 
 def predict_ch8(prefix, num_preds, net, vocab, device):  #@save
     """在prefix后面生成新字符"""
@@ -282,7 +280,7 @@ def train_epoch_ch8(net, train_iter, loss, updater, device, use_random_iter):
         l = loss(y_hat, y.long()).mean()
         updater.zero_grad()
         l.backward()
-        grad_clipping(net, 1)
+        nn.utils.clip_grad_norm_(net.parameters(),max_norm=0.99, norm_type=2)
         updater.step()
         metric.add(l * y.numel(), y.numel())
     return math.exp(metric[0] / metric[1]), metric[1] / timer.stop()
@@ -292,8 +290,6 @@ def train_ch8(net, train_iter, vocab, lr, num_epochs, device,
               use_random_iter=False):
     """训练模型（定义见第8章）"""
     loss = nn.CrossEntropyLoss()
-
-    # 初始化
     updater = torch.optim.SGD(net.parameters(), lr)
     predict = lambda prefix: predict_ch8(prefix, 50, net, vocab, device)
     # 训练和预测
@@ -304,8 +300,6 @@ def train_ch8(net, train_iter, vocab, lr, num_epochs, device,
     print(f'困惑度 {ppl:.1f}, {speed:.1f} 词元/秒 {str(device)}')
     print(predict('time traveller'))
     print(predict('traveller'))
-
-
 
 
 batch_size, num_steps = 32, 35
