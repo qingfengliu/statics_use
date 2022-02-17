@@ -7,21 +7,11 @@ import numpy as np
 from torch.utils import data
 from torchvision import transforms
 
-def truncate_pad(line, num_steps, padding_token):
-    """截断或填充文本序列"""
-    if len(line) > num_steps:
-        return line[:num_steps]  # 截断
-    return line + [padding_token] * (num_steps - len(line))  # 填充
-
-#@save
-def build_array_nmt(lines, vocab, num_steps):
-    """将机器翻译的文本序列转换成小批量"""
-    lines = [vocab[l] for l in lines]
-    lines = [l + [vocab['<eos>']] for l in lines]
-    array = torch.tensor([truncate_pad(
-        l, num_steps, vocab['<pad>']) for l in lines])
-    valid_len = (array != vocab['<pad>']).type(torch.int32).sum(1)
-    return array, valid_len
+def read_data_nmt():
+    """载入“英语－法语”数据集"""
+    with open(r'D:\书籍资料整理\torch翻译数据\fra.txt', 'r',
+             encoding='utf-8') as f:
+        return f.read()
 
 def preprocess_nmt(text):
     """预处理“英语－法语”数据集"""
@@ -35,12 +25,6 @@ def preprocess_nmt(text):
     out = [' ' + char if i > 0 and no_space(char, text[i - 1]) else char
            for i, char in enumerate(text)]
     return ''.join(out)
-
-def read_data_nmt():
-    """载入“英语－法语”数据集"""
-    with open(r'D:\书籍资料整理\torch翻译数据\fra.txt', 'r',
-             encoding='utf-8') as f:
-        return f.read()
 
 def tokenize_nmt(text, num_examples=None):
     """词元化“英语－法语”数据数据集"""
@@ -104,6 +88,21 @@ class Vocab:  #@save
     @property
     def token_freqs(self):
         return self._token_freqs
+
+def truncate_pad(line, num_steps, padding_token):
+    """截断或填充文本序列"""
+    if len(line) > num_steps:
+        return line[:num_steps]  # 截断
+    return line + [padding_token] * (num_steps - len(line))  # 填充
+
+def build_array_nmt(lines, vocab, num_steps):
+    """将机器翻译的文本序列转换成小批量"""
+    lines = [vocab[l] for l in lines]
+    lines = [l + [vocab['<eos>']] for l in lines]
+    array = torch.tensor([truncate_pad(
+        l, num_steps, vocab['<pad>']) for l in lines])
+    valid_len = (array != vocab['<pad>']).type(torch.int32).sum(1)
+    return array, valid_len
 
 def load_array(data_arrays, batch_size, is_train=True):
     """构造一个PyTorch数据迭代器"""
@@ -224,7 +223,7 @@ class Seq2SeqEncoder(Encoder):
     def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
                  dropout=0, **kwargs):
         super(Seq2SeqEncoder, self).__init__(**kwargs)
-        # 嵌入层
+        # 嵌入层 加一个 GRU 循环神经网络层
         self.embedding = nn.Embedding(vocab_size, embed_size)
         self.rnn = nn.GRU(embed_size, num_hiddens, num_layers,
                           dropout=dropout)
@@ -233,6 +232,7 @@ class Seq2SeqEncoder(Encoder):
         # 输出'X'的形状：(batch_size,num_steps,embed_size)
         X = self.embedding(X)
         # 在循环神经网络模型中，第一个轴对应于时间步
+        #转置一下向量
         X = X.permute(1, 0, 2)
         # 如果未提及状态，则默认为0
         output, state = self.rnn(X)
@@ -243,6 +243,7 @@ class Seq2SeqEncoder(Encoder):
 #seq2seq的解码器
 class Seq2SeqDecoder(Decoder):
     """用于序列到序列学习的循环神经网络解码器"""
+    #解码器的结构是一个embedding一个rnn一个全连接层
     def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
                  dropout=0, **kwargs):
         super(Seq2SeqDecoder, self).__init__(**kwargs)
@@ -314,7 +315,9 @@ def train_seq2seq(net, data_iter, lr, num_epochs, tgt_vocab, device):
         timer = Timer()
         metric = Accumulator(2)  # 训练损失总和，词元数量
         for batch in data_iter:
+
             optimizer.zero_grad()
+            #X_valid_len 应该是 有效长度  用于检验指标
             X, X_valid_len, Y, Y_valid_len = [x.to(device) for x in batch]
             bos = torch.tensor([tgt_vocab['<bos>']] * Y.shape[0],
                           device=device).reshape(-1, 1)
@@ -380,6 +383,28 @@ def bleu(pred_seq, label_seq, k):  #@save
         score *= math.pow(num_matches / (len_pred - n + 1), math.pow(0.5, n))
     return score
 
+embed_size, num_hiddens, num_layers, dropout = 32, 32, 2, 0.1
+batch_size, num_steps = 64, 10
+lr, num_epochs, device = 0.005, 300, try_gpu()
+
+#这个数据集返回的是 一个 数据生成器,  两个词表,一个 英语词表一个 法语词表
+train_iter, src_vocab, tgt_vocab = load_data_nmt(batch_size, num_steps)
+encoder = Seq2SeqEncoder(len(src_vocab), embed_size, num_hiddens, num_layers,
+                        dropout)
+decoder = Seq2SeqDecoder(len(tgt_vocab), embed_size, num_hiddens, num_layers,
+                        dropout)
+net = EncoderDecoder(encoder, decoder)
+#训练过程
+train_seq2seq(net, train_iter, lr, num_epochs, tgt_vocab, device)
+
+engs = ['go .', "i lost .", 'he\'s calm .', 'i\'m home .']
+fras = ['va !', 'j\'ai perdu .', 'il est calme .', 'je suis chez moi .']
+for eng, fra in zip(engs, fras):
+    translation, attention_weight_seq = predict_seq2seq(
+        net, eng, src_vocab, tgt_vocab, num_steps, device)
+    print(f'{eng} => {translation}, bleu {bleu(translation, fra, k=2):.3f}')
+
+## 测量各个组件输出大小
 # encoder = Seq2SeqEncoder(vocab_size=10, embed_size=8, num_hiddens=16,
 #                          num_layers=2)
 # encoder.eval()
@@ -400,22 +425,3 @@ def bleu(pred_seq, label_seq, k):  #@save
 # loss = MaskedSoftmaxCELoss()
 # loss(torch.ones(3, 4, 10), torch.ones((3, 4), dtype=torch.long),
 #      torch.tensor([4, 2, 0]))
-
-embed_size, num_hiddens, num_layers, dropout = 32, 32, 2, 0.1
-batch_size, num_steps = 64, 10
-lr, num_epochs, device = 0.005, 300, try_gpu()
-
-train_iter, src_vocab, tgt_vocab = load_data_nmt(batch_size, num_steps)
-encoder = Seq2SeqEncoder(len(src_vocab), embed_size, num_hiddens, num_layers,
-                        dropout)
-decoder = Seq2SeqDecoder(len(tgt_vocab), embed_size, num_hiddens, num_layers,
-                        dropout)
-net = EncoderDecoder(encoder, decoder)
-train_seq2seq(net, train_iter, lr, num_epochs, tgt_vocab, device)
-
-engs = ['go .', "i lost .", 'he\'s calm .', 'i\'m home .']
-fras = ['va !', 'j\'ai perdu .', 'il est calme .', 'je suis chez moi .']
-for eng, fra in zip(engs, fras):
-    translation, attention_weight_seq = predict_seq2seq(
-        net, eng, src_vocab, tgt_vocab, num_steps, device)
-    print(f'{eng} => {translation}, bleu {bleu(translation, fra, k=2):.3f}')
