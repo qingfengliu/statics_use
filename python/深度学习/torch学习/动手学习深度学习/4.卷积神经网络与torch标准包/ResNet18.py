@@ -5,7 +5,7 @@ from torch.utils import data
 from torchvision import transforms
 import torchvision
 
-
+#loss 0.011, train acc 0.997, test acc 0.922
 def load_data_fashion_mnist(batch_size, resize=None):  # @save
     """下载Fashion-MNIST数据集，然后将其加载到内存中"""
     trans = [transforms.ToTensor()]
