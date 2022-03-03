@@ -73,7 +73,6 @@ def init_weights(m):
 
 class Accumulator:  # @save
     """在n个变量上累加"""
-
     def __init__(self, n):
         self.data = [0.0] * n
 
