@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="hadoop@192.168.42.128:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/pycharm_project_spark" local="$PROJECT_DIR$/../liuqf_my_study/pyhon/pyspark_study" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>

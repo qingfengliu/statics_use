@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://D:/my_program/python_study/.idea/python_study.iml" filepath="D:/my_program/python_study/.idea/python_study.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../liuqf_my_study/pyhon/pyspark_study/.idea/pyspark_study.iml" filepath="$PROJECT_DIR$/../liuqf_my_study/pyhon/pyspark_study/.idea/pyspark_study.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../my_program/python_study/.idea/python_study.iml" filepath="$PROJECT_DIR$/../../my_program/python_study/.idea/python_study.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/statics_use.iml" filepath="$PROJECT_DIR$/.idea/statics_use.iml" />
     </modules>
   </component>

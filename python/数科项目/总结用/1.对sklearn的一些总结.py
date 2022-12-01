@@ -62,11 +62,11 @@ y_pred_train = rnd_clf.predict(X_train)  #在训练集上预测
 y_pred_test = rnd_clf.predict(X_test)  #在测试集上预测
 y_score_test =rnd_clf.predict_proba(X_test)   #测试集每个点的预测得分,可用于计算AUC
 
-# feat_labels=data07.columns
-# importance=rnd_clf.feature_importances_   #随机森林能够求出特征重要性,然而这个图像例子里并不适用
-# # imp_result=np.argsort(importance)[::-1]
-# for i in range(data07.shape[1]):
-#     print("%2d. %-*s %f" %(i+1,30,feat_lables[i],importance[imp_result[i]]))
+feat_labels=X_train.columns
+importance=rnd_clf.feature_importances_   #随机森林能够求出特征重要性,然而这个图像例子里并不适用
+imp_result=np.argsort(importance)[::-1]
+for j,i in enumerate(imp_result):
+    print("%2d. %-*s %f" %(j+1,30,feat_labels[i],importance[i]))
 
 
 print('训练集准确率:',accuracy_score(y_train_5, y_pred_train))

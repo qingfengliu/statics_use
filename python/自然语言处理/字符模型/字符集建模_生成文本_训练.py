@@ -26,7 +26,7 @@ step = 3
 sentences = []
 next_chars = []
 
-#过采样了数据,每3个字符采样40个字符(在第6个字符再采样60个,依次类推)
+#了数据,每3个字符采样40个字符(在第6个字符再采样60个,依次类推)
 for i in range(0, len(text) - maxlen, step):
     sentences.append(text[i: i + maxlen])
     next_chars.append(text[i + maxlen])

@@ -17,5 +17,5 @@ from sklearn.datasets import load_iris
 iris = load_iris()
 rnd_clf = RandomForestClassifier(n_estimators=500, random_state=42)
 rnd_clf.fit(iris["data"], iris["target"])
-for name, score in zip(iris["feature_names"], rnd_clf.feature_importances_):
+for name, score in zip(iris["feature_names"], rnd_clf.portances_):
     print(name, score)

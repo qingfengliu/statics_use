@@ -196,14 +196,11 @@ def train(net, train_iter, test_iter, num_epochs, lr, device, net_dict, init_par
     print('training on', device)
     net.to(device)
     # 定义优化器
-    optimizer = torch.optim.SGD(net.parameters(), lr=lr) #21轮以后会循环
-    # optimizer = torch.optim.RMSprop(net.parameters(),
-    #                                 lr=lr,
-    #                                 alpha=0.90,
-    #                                 eps=1e-08,
-    #                                 weight_decay=0,
-    #                                 momentum=0,
-    #                                 centered=False)
+    # optimizer = torch.optim.SGD(net.parameters(), lr=lr) #21轮以后会循环
+    optimizer = torch.optim.RMSprop(net.parameters(),
+                                    lr=lr,
+                                    alpha=0.90,
+                                    eps=1e-08)
 
     # 定义损失函数
     loss = nn.CrossEntropyLoss()
